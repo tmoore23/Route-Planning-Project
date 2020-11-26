@@ -27,6 +27,21 @@ static std::optional<std::vector<std::byte>> ReadFile(const std::string &path)
     return std::move(contents);
 }
 
+bool ValidInput(const float start_x, const float start_y, const float goal_x, const float goal_y) {
+    if (
+        (start_x >= 0 && start_x <= 100) && 
+        (start_y >= 0 && start_y <= 100) && 
+        (goal_x >= 0  && goal_x <= 100)  && 
+        (goal_y >= 0  && goal_y <= 100)
+    ) {
+        std::cout << "Starting point: (" << start_x << "," << start_y << ")\n";
+        std::cout << "Ending point: (" << goal_x << "," << goal_y << ")\n";
+        return true;
+    }
+    std::cout << "Invalid input. Input values must be between 0 and 100.\n";
+    return false;
+}
+
 int main(int argc, const char **argv)
 {    
     std::string osm_data_file = "";
@@ -52,28 +67,34 @@ int main(int argc, const char **argv)
             osm_data = std::move(*data);
     }
     
-    // TODO 1: Declare floats `start_x`, `start_y`, `end_x`, and `end_y` and get
-    // user input for these values using std::cin. Pass the user input to the
-    // RoutePlanner object below in place of 10, 10, 90, 90.
+    float start_x;
+    float start_y;
+    float goal_x;
+    float goal_y;
+    char separator;
 
-    // Build Model.
-    RouteModel model{osm_data};
+    std::cout << "Enter starting and ending cordinates (i.e, 10, 10, 90, 90): ";
+    std::cin >> start_x >> separator >> start_y >> separator >> goal_x >> separator >> goal_y;
+    if(ValidInput(start_x, start_y, goal_x, goal_y)) {
+        // Build Model.
+        RouteModel model{osm_data};
 
-    // Create RoutePlanner object and perform A* search.
-    RoutePlanner route_planner{model, 10, 10, 90, 90};
-    route_planner.AStarSearch();
+        // Create RoutePlanner object and perform A* search.
+        RoutePlanner route_planner{model, start_x, start_y, goal_x, goal_y};
+        route_planner.AStarSearch();
 
-    std::cout << "Distance: " << route_planner.GetDistance() << " meters. \n";
+        std::cout << "Distance: " << route_planner.GetDistance() << " meters. \n";
 
-    // Render results of search.
-    Render render{model};
+        // Render results of search.
+        Render render{model};
 
-    auto display = io2d::output_surface{400, 400, io2d::format::argb32, io2d::scaling::none, io2d::refresh_style::fixed, 30};
-    display.size_change_callback([](io2d::output_surface& surface){
-        surface.dimensions(surface.display_dimensions());
-    });
-    display.draw_callback([&](io2d::output_surface& surface){
-        render.Display(surface);
-    });
-    display.begin_show();
+        auto display = io2d::output_surface{400, 400, io2d::format::argb32, io2d::scaling::none, io2d::refresh_style::fixed, 30};
+        display.size_change_callback([](io2d::output_surface& surface){
+            surface.dimensions(surface.display_dimensions());
+        });
+        display.draw_callback([&](io2d::output_surface& surface){
+            render.Display(surface);
+        });
+        display.begin_show();
+    }
 }
